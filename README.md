@@ -1,2 +1,2 @@
 # IGM
-IGM stuff for Lausanne postdoc
+Weird IGM test cases
