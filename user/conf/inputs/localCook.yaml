@@ -1,0 +1,16 @@
+localCook:
+  type: netcdf
+  filename: input.nc
+  run_batch: True
+  coarsening:
+    boundary: trim
+    ratio: 1
+  crop:
+    xmin: null
+    xmax: null
+    ymin: null
+    ymax: null
+  icemask:
+    include: False
+    shapefile: icemask.shp 
+    invert: False

@@ -1,0 +1,129 @@
+# @package _global_
+
+core:
+  print_imported_modules: true
+  hardware:
+    visible_gpus: [0]
+
+defaults:
+- override /inputs:
+  - oggm_shopCook
+  - localCook
+- override /processes:
+  - data_assimilationCook
+  - iceflow
+
+inputs:
+  localCook:
+    coarsening:
+      ratio: 1
+      boundary: trim
+    type: netcdf
+    run_batch: true
+    crop:
+      xmin: null
+      xmax: null
+      ymin: null
+      ymax: null
+    icemask:
+      include: False
+  oggm_shopCook:
+    RGI_ID: RGI2000-v7.0-G-17-15343
+    thk_source: millan_ice_thickness
+    vel_source: millan_ice_velocity
+    smooth_obs_vel: True
+    incl_glathida: true
+    preprocess: true
+    highres: false
+    sub_entity_mask: true
+
+processes:
+  iceflow:
+    numerics:
+      Nz: 2
+    physics:
+      init_slidingco: 0.045
+      init_arrhenius: 30
+    emulator: 
+      pretrained: false
+      retrain_freq: 100
+      warm_up_it: 0
+      nbit_init: 1000
+      lr_init: 0.001
+      lr: 0.001
+      lr_decay: 1.0
+      nbit: 500
+      network: 
+        nb_layers: 6
+        nb_out_filter: 32
+        conv_ker_size: 3
+      framesizemax: 1000
+
+  data_assimilationCook:
+    control_list: 
+      - thk
+      - arrhenius
+      - usurf
+    cost_list:
+      - velsurf
+      - icemask
+      - thk
+      - usurf
+      #- divfluxfcz
+    optimization:
+      nbitmax: 1500
+      step_size: 1.0
+      retrain_iceflow_model: true
+      fix_opti_normalization_issue: true
+      obstacle_constraint: ['reproject']
+      step_size_decay: 1.0
+      pertubate: True
+      init_zero_thk: false
+      optimizer_epsilon: 1.0e-07
+      optimizer_clipnorm: 10000000.0
+      method: ADAM
+      sole_mask: false
+    fitting:
+      velsurfobs_std: 0.1
+      thkobs_std: 3.0
+      usurfobs_std: 0.3
+      divfluxobs_std: 1.0
+      log_slidingco: True
+      uniformize_thkobs: true
+      velsurfobs_thr: 0.0
+      include_low_speed_term: false
+    regularization:
+      thk: 2.e+5
+      arrhenius: 1.0e+3
+      smooth_anisotropy_factor: 1.0
+      convexity_weight: 0.0
+      convexity_power: 0.0
+      to_regularize: thk
+    scaling:
+      thk: 1.0
+      arrhenius: 0.1
+      usurf: 1.0
+      slidingco: 0.0001
+    divflux:
+      method: upwind
+      force_zero_sum: true
+    output:
+      plot2d_live: true
+      plot2d: true
+      editor_plot2d: vs
+      freq: 50
+      save_iterat_in_ncdf: false
+      save_result_in_ncdf: geology-optimized.nc
+      vars_to_save:
+        - usurf
+        - thk
+        - arrhenius
+        - velbase_mag
+        - velsurf_mag
+        - velsurfobs_mag
+        - divflux
+        - icemask
+        - dhdt
+    cook:
+      infer_params: true
+      vol_std: 10.0
